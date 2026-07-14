@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Acil">
+<meta name="theme-color" content="#0d0f14">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Acil Simülatör</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d0f14;--surface:#151820;--surface2:#1c2030;--surface3:#232840;
+  --border:#2a3050;--border2:#374060;
+  --red:#e05c5c;--yellow:#e8a03a;--green:#4ec994;--blue:#4f8ef7;--purple:#9b7fe8;
+  --text:#eceef5;--text2:#8b90aa;--text3:#4a506a;
+  --radius:14px;--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bot: env(safe-area-inset-bottom);
+}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  min-height:100vh;display:flex;flex-direction:column;
+  padding-top:var(--safe-top);padding-bottom:var(--safe-bot);
+  overscroll-behavior:none;
+}
+body.light{
+  --bg:#f0f2f8;--surface:#fff;--surface2:#f5f6fb;--surface3:#eceef5;
+  --border:#dde0ee;--border2:#c8ccde;
+  --text:#1a1d2e;--text2:#5a6080;--text3:#9098b8;
+}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100vh;}
+.screen.active{display:flex;}
+
+/* NAVBAR */
+.navbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:20;
+}
+.nav-logo{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--red);letter-spacing:.06em;}
+.nav-sub{font-size:11px;color:var(--text3);margin-left:auto;}
+.nav-back{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;}
+
+/* HOME */
+.home-hero{padding:28px 20px 20px;text-align:center;}
+.hero-pulse{width:60px;height:60px;margin:0 auto 16px;position:relative;display:flex;align-items:center;justify-content:center;}
+.hero-pulse::before{content:'';position:absolute;width:100%;height:100%;border-radius:50%;background:rgba(224,92,92,.15);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:1}}
+.hero-icon{font-size:30px;position:relative;z-index:1;}
+.hero-title{font-size:20px;font-weight:700;margin-bottom:5px;}
+.hero-sub{font-size:13px;color:var(--text2);line-height:1.6;}
+
+.home-stats{display:flex;gap:10px;padding:0 20px 20px;}
+.stat-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;}
+.stat-num{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--blue);}
+.stat-label{font-size:9px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+
+.home-actions{padding:0 20px;display:flex;flex-direction:column;gap:10px;}
+.action-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;
+  width:100%;font-family:var(--sans);text-align:left;
+}
+.action-card:active{transform:scale(.98);}
+.action-card.primary{border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.08);}
+.action-card.secondary{border-color:rgba(78,201,148,.35);background:rgba(78,201,148,.07);}
+.action-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.action-icon.blue{background:rgba(79,142,247,.15);}
+.action-icon.green{background:rgba(78,201,148,.15);}
+.action-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.action-desc{font-size:11px;color:var(--text2);}
+.action-arrow{margin-left:auto;color:var(--text3);font-size:20px;}
+
+.case-list-wrap{padding:20px;}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.case-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;}
+.case-item:active{background:var(--surface2);}
+.case-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-red{background:var(--red);box-shadow:0 0 6px var(--red);}
+.dot-yellow{background:var(--yellow);box-shadow:0 0 6px var(--yellow);}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.case-info{flex:1;min-width:0;}
+.case-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.case-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.case-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--surface3);color:var(--text2);border:1px solid var(--border);white-space:nowrap;flex-shrink:0;}
+.case-delete{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;}
+.empty-state{text-align:center;padding:36px 20px;color:var(--text3);font-size:13px;line-height:1.8;}
+
+/* FORM */
+.form-scroll{flex:1;overflow-y:auto;padding:18px;}
+.form-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.step-num{width:26px;height:26px;border-radius:7px;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);flex-shrink:0;}
+.step-title{font-size:14px;font-weight:600;}
+.step-hint{font-size:11px;color:var(--text3);margin-top:1px;}
+.field-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:6px;display:block;}
+.field-row{display:flex;gap:10px;margin-bottom:12px;}
+.field-row .field-wrap{flex:1;}
+.field-wrap{margin-bottom:12px;}
+.field-wrap:last-child{margin-bottom:0;}
+.f-input,.f-textarea,.f-select{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:14px;
+  outline:none;transition:border-color .15s;-webkit-appearance:none;
+}
+.f-input:focus,.f-textarea:focus,.f-select:focus{border-color:var(--blue);}
+.f-textarea{min-height:72px;resize:vertical;line-height:1.5;}
+.vitals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.vital-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.vital-name{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--mono);}
+.vital-input{width:100%;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;outline:none;}
+.vital-unit{font-size:10px;color:var(--text3);margin-top:2px;}
+.imaging-toggle{padding:10px 14px;border-radius:8px;border:1px dashed var(--border2);background:transparent;color:var(--text2);font-family:var(--sans);font-size:13px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;margin-bottom:10px;}
+.imaging-toggle:active{border-color:var(--purple);color:var(--purple);}
+.imaging-section{display:none;}
+.imaging-section.open{display:block;}
+.urgency-row{display:flex;gap:8px;}
+.urgency-btn{flex:1;padding:10px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;font-family:var(--sans);}
+.urgency-btn.red.selected{background:rgba(224,92,92,.2);border-color:var(--red);color:var(--red);}
+.urgency-btn.yellow.selected{background:rgba(232,160,58,.2);border-color:var(--yellow);color:var(--yellow);}
+.urgency-btn.green.selected{background:rgba(78,201,148,.2);border-color:var(--green);color:var(--green);}
+.chip-group{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s;user-select:none;}
+.chip.selected{background:rgba(79,142,247,.18);border-color:var(--blue);color:var(--blue);font-weight:600;}
+.form-bottom{padding:14px 18px;background:var(--surface);border-top:1px solid var(--border);}
+.btn-save-case{width:100%;padding:15px;border-radius:12px;border:none;background:var(--blue);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;}
+
+/* SIM */
+.sim-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20;}
+.sim-progress-wrap{flex:1;}
+.sim-progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;}
+.sim-progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.sim-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .4s;}
+.sim-body{flex:1;overflow-y:auto;padding:16px;}
+.patient-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+.patient-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.patient-avatar{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.patient-avatar.ped{background:rgba(155,127,232,.15);}
+.patient-avatar.adult{background:rgba(79,142,247,.15);}
+.patient-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;}
+.patient-name{font-size:18px;font-weight:700;margin:2px 0;}
+.urgency-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.urgency-badge.red{background:rgba(224,92,92,.15);color:var(--red);border:1px solid rgba(224,92,92,.3);}
+.urgency-badge.yellow{background:rgba(232,160,58,.15);color:var(--yellow);border:1px solid rgba(232,160,58,.3);}
+.urgency-badge.green{background:rgba(78,201,148,.15);color:var(--green);border:1px solid rgba(78,201,148,.3);}
+.vitals-display{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:12px;border-top:1px solid var(--border);}
+.vital-display-box{background:var(--bg);border-radius:8px;padding:9px;text-align:center;}
+.vital-display-val{font-family:var(--mono);font-size:14px;font-weight:600;}
+.vital-display-name{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;}
+.complaint-box{background:var(--surface2);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:11px 13px;font-size:13px;line-height:1.6;margin-top:10px;font-style:italic;}
+.sim-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:all .2s;}
+.sim-step.locked{opacity:.35;pointer-events:none;}
+.sim-step.done{border-color:rgba(78,201,148,.35);}
+.sim-step-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.sim-step-icon{font-size:18px;}
+.sim-step-title{font-size:14px;font-weight:600;flex:1;}
+.sim-step-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;}
+.badge-open{background:rgba(79,142,247,.15);color:var(--blue);}
+.badge-done{background:rgba(78,201,148,.15);color:var(--green);}
+.test-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.test-chip{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s;user-select:none;}
+.test-chip.selected{background:rgba(79,142,247,.18);border-color:var(--blue);color:var(--blue);font-weight:600;}
+.test-chip.wrong{background:rgba(224,92,92,.15);border-color:var(--red);color:var(--red);}
+.test-chip.correct{background:rgba(78,201,148,.15);border-color:var(--green);color:var(--green);}
+.sim-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .15s;}
+.sim-input:focus{border-color:var(--blue);}
+.sim-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;resize:vertical;min-height:80px;line-height:1.5;transition:border-color .15s;}
+.sim-textarea:focus{border-color:var(--blue);}
+.sim-confirm-btn{width:100%;padding:13px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;margin-top:12px;}
+.feedback-box{border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13px;line-height:1.6;}
+.feedback-box.good{background:rgba(78,201,148,.1);border:1px solid rgba(78,201,148,.3);color:var(--green);}
+.feedback-box.warn{background:rgba(232,160,58,.1);border:1px solid rgba(232,160,58,.3);color:var(--yellow);}
+.feedback-box.bad{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.3);color:var(--red);}
+.imaging-display{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px;margin-top:10px;font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.7;}
+.imaging-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;display:block;}
+
+/* RESULT */
+.result-wrap{padding:18px;}
+.result-hero{text-align:center;padding:24px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;}
+.result-emoji{font-size:42px;margin-bottom:10px;}
+.result-title{font-size:20px;font-weight:700;margin-bottom:5px;}
+.result-sub{font-size:12px;color:var(--text2);}
+.score-row{display:flex;gap:10px;margin:14px 0;}
+.score-box{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center;}
+.score-val{font-family:var(--mono);font-size:24px;font-weight:700;}
+.score-val.green{color:var(--green);}
+.score-val.blue{color:var(--blue);}
+.score-name{font-size:9px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;}
+.answer-reveal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.reveal-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);font-family:var(--mono);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.reveal-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.reveal-text{font-size:13px;line-height:1.7;}
+.alert-reveal{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--red);margin-bottom:10px;}
+.btn-next-case{width:100%;padding:15px;border-radius:12px;border:none;background:var(--blue);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-home-out{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;}
+
+/* THEME & MISC */
+.theme-toggle{position:fixed;bottom:calc(20px + var(--safe-bot));right:20px;width:42px;height:42px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.mt8{margin-top:8px;}
+.mt12{margin-top:12px;}
+.tip{font-size:11px;color:var(--text3);margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="homeScreen">
+  <div class="navbar">
+    <div class="nav-logo">🚨 ACİL SİMÜLATÖR</div>
+    <div class="nav-sub" id="homeDate"></div>
+  </div>
+  <div class="home-hero">
+    <div class="hero-pulse"><div class="hero-icon">❤️‍🔥</div></div>
+    <div class="hero-title">Merhaba, Doktor 👋</div>
+    <div class="hero-sub">Bugün birkaç vaka çözelim.<br>Küçük adımlar, büyük güven.</div>
+  </div>
+  <div class="home-stats">
+    <div class="stat-box"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Toplam Vaka</div></div>
+    <div class="stat-box"><div class="stat-num" id="statDone" style="color:var(--green)">0</div><div class="stat-label">Çözüldü</div></div>
+    <div class="stat-box"><div class="stat-num" id="statScore" style="color:var(--yellow)">—</div><div class="stat-label">Ort. Skor</div></div>
+  </div>
+  <div class="home-actions">
+    <button class="action-card primary" onclick="goTo('simScreen');startSim()">
+      <div class="action-icon blue">⚡</div>
+      <div><div class="action-title">Simülasyona Başla</div><div class="action-desc">Vakalar karışık gelsin, adım adım çöz</div></div>
+      <div class="action-arrow">›</div>
+    </button>
+    <button class="action-card secondary" onclick="goTo('formScreen')">
+      <div class="action-icon green">✏️</div>
+      <div><div class="action-title">Yeni Vaka Yaz</div><div class="action-desc">Kitabı okurken vaka ekle, şablon seni yönlendirir</div></div>
+      <div class="action-arrow">›</div>
+    </button>
+  </div>
+  <div class="case-list-wrap">
+    <div class="section-title">Vakalarım</div>
+    <div id="caseList"><div class="empty-state">Henüz vaka yok.<br>Kitabını aç, ilk vakayı ekle! 📖</div></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="screen" id="formScreen">
+  <div class="navbar">
+    <button class="nav-back" onclick="goTo('homeScreen')">‹</button>
+    <div class="nav-logo">✏️ Yeni Vaka</div>
+  </div>
+  <div class="form-scroll">
+
+    <div class="form-step">
+      <div class="step-header"><div class="step-num">1</div><div><div class="step-title">Hasta Tanımı</div><div class="step-hint">Yaş, cinsiyet, şikayet, aciliyet</div></div></div>
+      <div class="field-row">
+        <div class="field-wrap"><label class="field-label">Yaş</label><input class="f-input" id="f_age" type="number" placeholder="38"></div>
+        <div class="field-wrap"><label class="field-label">Cinsiyet</label><select class="f-select" id="f_sex"><option value="E">Erkek</option><option value="K">Kadın</option></select></div>
+        <div class="field-wrap"><label class="field-label">Tip</label><select class="f-select" id="f_type"><option value="adult">Yetişkin</option><option value="ped">Pediatrik</option></select></div>
+      </div>
+      <div class="field-wrap"><label class="field-label">Başvuru Şikayeti</label><input class="f-input" id="f_chief" placeholder="Göğüs ağrısı, ateş..."></div>
+      <div class="field-wrap"><label class="field-label">Aciliyet</label>
+        <div class="urgency-row">
+          <button class="urgency-btn red selected" id="urg_red" onclick="setUrgency('red')">🔴 Acil</button>
+          <button class="urgency-btn yellow" id="urg_yellow" onclick="setUrgency('yellow')">🟡 Orta</button>
+          <button class="urgency-btn green" id="urg_green" onclick="setUrgency('green')">🟢 Elektif</button>
+        </div>
+      </div>
+      <div class="field-wrap"><label class="field-label">Kategori</label>
+        <select class="f-select" id="f_cat">
+          <option>Kardiyoloji</option><option>Nöroloji</option><option>Göğüs</option><option>GIS</option>
+          <option>Endokrin</option><option>Alerji</option><option>Kadın-Doğum</option><option>Nefroloji</option>
+          <option>KBB</option><option>Ortopedi</option><option>Enfeksiyon</option><option>Pediatrik</option><option>Diğer</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-step">
+      <div class="step-header"><div class="step-num">2</div><div><div class="step-title">Anamnez & Hikaye</div><div class="step-hint">Şikayetin süresi, karakteri, eşlik edenler</div></div></div>
+      <div class="field-wrap"><label class="field-label">Hikaye</label><textarea class="f-textarea" id="f_history" placeholder="2 saattir devam eden, sol göğse yayılan sıkıştırıcı ağrı. Terleme ve bulantı eşlik ediyor..."></textarea></div>
+      <div class="field-wrap"><label class="field-label">Özgeçmiş / ilaç</label><input class="f-input" id="f_pmh" placeholder="HT, DM, aspirin 100mg/gün..."></div>
+    </div>
+
+    <div class="form-step">
+      <div class="step-header"><div class="step-num">3</div><div><div class="step-title">Vital Bulgular</div><div class="step-hint">Triajdan gelen değerleri gir</div></div></div>
+      <div class="vitals-grid">
+        <div class="vital-box"><div class="vital-name">KB (mmHg)</div><input class="vital-input" id="v_bp" placeholder="120/80"><div class="vital-unit">sis/dia</div></div>
+        <div class="vital-box"><div class="vital-name">Nabız</div><input class="vital-input" id="v_hr" placeholder="88"><div class="vital-unit">atım/dk</div></div>
+        <div class="vital-box"><div class="vital-name">SpO₂</div><input class="vital-input" id="v_spo2" placeholder="97"><div class="vital-unit">%</div></div>
+        <div class="vital-box"><div class="vital-name">Solunum</div><input class="vital-input" id="v_rr" placeholder="16"><div class="vital-unit">soluk/dk</div></div>
+        <div class="vital-box"><div class="vital-name">Ateş</div><input class="vital-input" id="v_temp" placeholder="36.8"><div class="vital-unit">°C</div></div>
+        <div class="vital-box"><div class="vital-name">GKS</div><input class="vital-input" id="v_gcs" placeholder="15"><div class="vital-unit">puan</div></div>
+      </div>
+    </div>
+
+    <div class="form-step">
+      <div class="step-header"><div class="step-num">4</div><div><div class="step-title">Görüntüleme & Tetkik</div><div class="step-hint">Varsa EKG, grafi, BT bulgularını yaz</div></div></div>
+      <button class="imaging-toggle" onclick="toggleImg('ekgSec')">+ EKG bulgusu</button>
+      <div class="imaging-section" id="ekgSec"><div class="field-wrap"><label class="field-label">EKG</label><textarea class="f-textarea" id="f_ekg" placeholder="Sinüs ritmi, HR:92, II/III/aVF'de ST elevasyonu 2mm..."></textarea></div></div>
+      <button class="imaging-toggle" onclick="toggleImg('grafiSec')">+ Akciğer / Karın grafisi</button>
+      <div class="imaging-section" id="grafiSec"><div class="field-wrap"><label class="field-label">Grafi</label><textarea class="f-textarea" id="f_xray" placeholder="PA akciğer grafisinde sağ bazal opasite..."></textarea></div></div>
+      <button class="imaging-toggle" onclick="toggleImg('btSec')">+ BT / MR bulgusu</button>
+      <div class="imaging-section" id="btSec"><div class="field-wrap"><label class="field-label">BT / MR</label><textarea class="f-textarea" id="f_ct" placeholder="Kranial BT'de sağ MCA alanında hipodens lezyon..."></textarea></div></div>
+      <button class="imaging-toggle" onclick="toggleImg('labSec')">+ Lab sonuçları</button>
+      <div class="imaging-section" id="labSec"><div class="field-wrap"><label class="field-label">Lab</label><textarea class="f-textarea" id="f_lab" placeholder="Troponin: 2.4, CRP: 48, Lökosit: 14.2..."></textarea></div></div>
+    </div>
+
+    <div class="form-step">
+      <div class="step-header"><div class="step-num">5</div><div><div class="step-title">Doğru Yanıtlar</div><div class="step-hint">Simülasyonda kontrol edilecek cevaplar</div></div></div>
+      <div class="field-wrap"><label class="field-label">Tanı</label><input class="f-input" id="f_dx" placeholder="İnferior STEMI (RCA tıkanması)"></div>
+      <div class="field-wrap"><label class="field-label">İlk 3 Adım</label><textarea class="f-textarea" id="f_first3" placeholder="1. 12 derivasyon EKG&#10;2. Aspirin 300mg çiğnet&#10;3. Kardiyoloji çağır"></textarea></div>
+      <div class="field-wrap">
+        <label class="field-label">İstenmesi Gereken Tetkikler</label>
+        <div class="chip-group" id="testChips">
+          <span class="chip" onclick="this.classList.toggle('selected')">Tam Kan</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Biyokimya</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Koagülasyon</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Troponin</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">CRP/Sed</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">D-Dimer</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Kan Gazı</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">İdrar</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">β-hCG</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Lipaz/Amilaz</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">EKG</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">PA Akciğer</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Karın Grafisi</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">BT Beyin</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">BT Toraks</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">BT Abdomen</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">USG Abdomen</span>
+          <span class="chip" onclick="this.classList.toggle('selected')">Ekokardiyografi</span>
+        </div>
+      </div>
+      <div class="field-wrap mt12"><label class="field-label">Tedavi / Order</label><textarea class="f-textarea" id="f_tx" placeholder="SF 500ml IV&#10;Morfin 2mg IV&#10;Kardiyoloji konsültasyonu"></textarea></div>
+      <div class="field-wrap"><label class="field-label">Reçete / İlaçlar</label><textarea class="f-textarea" id="f_rx" placeholder="Aspirin 100mg 1x1&#10;Tikagrelor 90mg 2x1"></textarea></div>
+      <div class="field-wrap"><label class="field-label">⚠️ Kaçırma!</label><input class="f-input" id="f_alert" placeholder="Sağ ventrikül MI → nitrat kontrendike!"></div>
+    </div>
+  </div>
+  <div class="form-bottom"><button class="btn-save-case" onclick="saveCase()">✓ Vakayı Kaydet</button></div>
+</div>
+
+<!-- SIM -->
+<div class="screen" id="simScreen">
+  <div class="sim-header">
+    <button class="nav-back" onclick="goTo('homeScreen')">‹</button>
+    <div class="sim-progress-wrap">
+      <div class="sim-progress-label"><span id="simProgressLabel">Yükleniyor...</span><span id="simProgressPct">0%</span></div>
+      <div class="sim-progress-bar"><div class="sim-progress-fill" id="simProgressFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="sim-body" id="simBody"></div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div class="navbar"><button class="nav-back" onclick="goTo('homeScreen')">‹</button><div class="nav-logo">📋 Vaka Sonu</div></div>
+  <div style="flex:1;overflow-y:auto"><div class="result-wrap" id="resultWrap"></div></div>
+</div>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────
+let cases = [];
+let simQueue = [], simIdx = 0, currentCase = null, selectedTests = [];
+let scores = [];
+let urgencyVal = 'red';
+let isLight = false;
+
+function load(){
+  try{ cases = JSON.parse(localStorage.getItem('acil_cases')||'[]'); }catch(e){ cases=[]; }
+  try{ scores = JSON.parse(localStorage.getItem('acil_scores')||'[]'); }catch(e){ scores=[]; }
+  try{ isLight = localStorage.getItem('acil_theme')==='light'; }catch(e){}
+  if(isLight) document.body.classList.add('light');
+  document.getElementById('themeBtn').textContent = isLight?'🌞':'🌙';
+}
+
+function saveCases(){ try{ localStorage.setItem('acil_cases', JSON.stringify(cases)); }catch(e){ alert('Kayıt hatası: '+e.message); } }
+function saveScores(){ try{ localStorage.setItem('acil_scores', JSON.stringify(scores)); }catch(e){} }
+
+function toggleTheme(){
+  isLight=!isLight;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('themeBtn').textContent=isLight?'🌞':'🌙';
+  try{ localStorage.setItem('acil_theme',isLight?'light':'dark'); }catch(e){}
+}
+
+// ── SCREENS ──────────────────────────────────────────────────
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='homeScreen') renderHome();
+}
+
+// ── HOME ─────────────────────────────────────────────────────
+function renderHome(){
+  const now=new Date();
+  document.getElementById('homeDate').textContent=now.toLocaleDateString('tr-TR',{weekday:'short',day:'numeric',month:'long'});
+  document.getElementById('statTotal').textContent=cases.length;
+  document.getElementById('statDone').textContent=scores.length;
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+  document.getElementById('statScore').textContent=avg!==null?avg+'%':'—';
+  const list=document.getElementById('caseList');
+  if(!cases.length){ list.innerHTML='<div class="empty-state">Henüz vaka yok.<br>Kitabını aç, ilk vakayı ekle! 📖</div>'; return; }
+  list.innerHTML=cases.map((c,i)=>`
+    <div class="case-item">
+      <div class="case-dot dot-${c.urgency==='red'?'red':c.urgency==='yellow'?'yellow':'green'}"></div>
+      <div class="case-info" onclick="startSimSingle(${i})">
+        <div class="case-name">${c.age}y ${c.sex==='E'?'Erkek':'Kadın'} — ${c.chief}</div>
+        <div class="case-meta">${c.category} · ${c.type==='ped'?'Pediatrik':'Yetişkin'}</div>
+      </div>
+      <span class="case-tag">${c.category}</span>
+      <button class="case-delete" onclick="deleteCase(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function deleteCase(i){
+  if(!confirm('Bu vakayı sil?')) return;
+  cases.splice(i,1);
+  saveCases();
+  renderHome();
+}
+
+// ── FORM ─────────────────────────────────────────────────────
+function setUrgency(val){
+  urgencyVal=val;
+  ['red','yellow','green'].forEach(u=>document.getElementById('urg_'+u).classList.toggle('selected',u===val));
+}
+function toggleImg(id){ document.getElementById(id).classList.toggle('open'); }
+
+function saveCase(){
+  const age=document.getElementById('f_age').value.trim();
+  const chief=document.getElementById('f_chief').value.trim();
+  if(!age||!chief){ alert('Yaş ve şikayeti doldur!'); return; }
+  const selTests=[...document.querySelectorAll('#testChips .chip.selected')].map(c=>c.textContent);
+  const c={
+    id:Date.now(), age, sex:document.getElementById('f_sex').value,
+    type:document.getElementById('f_type').value, chief, urgency:urgencyVal,
+    category:document.getElementById('f_cat').value,
+    history:document.getElementById('f_history').value.trim(),
+    pmh:document.getElementById('f_pmh').value.trim(),
+    vitals:{
+      bp:document.getElementById('v_bp').value, hr:document.getElementById('v_hr').value,
+      spo2:document.getElementById('v_spo2').value, rr:document.getElementById('v_rr').value,
+      temp:document.getElementById('v_temp').value, gcs:document.getElementById('v_gcs').value,
+    },
+    ekg:document.getElementById('f_ekg').value.trim(),
+    xray:document.getElementById('f_xray').value.trim(),
+    ct:document.getElementById('f_ct').value.trim(),
+    lab:document.getElementById('f_lab').value.trim(),
+    dx:document.getElementById('f_dx').value.trim(),
+    first3:document.getElementById('f_first3').value.trim(),
+    tests:selTests,
+    tx:document.getElementById('f_tx').value.trim(),
+    rx:document.getElementById('f_rx').value.trim(),
+    alert:document.getElementById('f_alert').value.trim(),
+  };
+  cases.push(c);
+  saveCases();
+  resetForm();
+  goTo('homeScreen');
+}
+
+function resetForm(){
+  ['f_age','f_chief','f_history','f_pmh','v_bp','v_hr','v_spo2','v_rr','v_temp','v_gcs','f_ekg','f_xray','f_ct','f_lab','f_dx','f_first3','f_tx','f_rx','f_alert']
+    .forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('#testChips .chip').forEach(c=>c.classList.remove('selected'));
+  ['ekgSec','grafiSec','btSec','labSec'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  setUrgency('red');
+}
+
+// ── SIM ──────────────────────────────────────────────────────
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr; }
+
+function startSim(){
+  if(!cases.length){ alert('Önce en az bir vaka ekle!'); goTo('homeScreen'); return; }
+  simQueue=shuffle([...cases]); simIdx=0; loadSimCase();
+}
+function startSimSingle(idx){
+  simQueue=[cases[idx]]; simIdx=0; goTo('simScreen'); loadSimCase();
+}
+function loadSimCase(){
+  if(simIdx>=simQueue.length){ goTo('homeScreen'); return; }
+  currentCase=simQueue[simIdx]; selectedTests=[];
+  renderSim();
+}
+
+function renderSim(){
+  const c=currentCase;
+  const pct=Math.round((simIdx/simQueue.length)*100);
+  document.getElementById('simProgressLabel').textContent=`Vaka ${simIdx+1} / ${simQueue.length}`;
+  document.getElementById('simProgressPct').textContent=pct+'%';
+  document.getElementById('simProgressFill').style.width=pct+'%';
+  const vit=c.vitals||{};
+  let vitHtml='';
+  if(Object.values(vit).some(v=>v)){
+    vitHtml=`<div class="vitals-display">
+      ${vit.bp?`<div class="vital-display-box"><div class="vital-display-val">${vit.bp}</div><div class="vital-display-name">KB</div></div>`:''}
+      ${vit.hr?`<div class="vital-display-box"><div class="vital-display-val">${vit.hr}</div><div class="vital-display-name">Nabız</div></div>`:''}
+      ${vit.spo2?`<div class="vital-display-box"><div class="vital-display-val">${vit.spo2}%</div><div class="vital-display-name">SpO₂</div></div>`:''}
+      ${vit.rr?`<div class="vital-display-box"><div class="vital-display-val">${vit.rr}</div><div class="vital-display-name">Solunum</div></div>`:''}
+      ${vit.temp?`<div class="vital-display-box"><div class="vital-display-val">${vit.temp}°</div><div class="vital-display-name">Ateş</div></div>`:''}
+      ${vit.gcs?`<div class="vital-display-box"><div class="vital-display-val">${vit.gcs}</div><div class="vital-display-name">GKS</div></div>`:''}
+    </div>`;
+  }
+  const hasImg=c.ekg||c.xray||c.ct||c.lab;
+  const urgLabel=c.urgency==='red'?'🔴 Acil':c.urgency==='yellow'?'🟡 Orta':'🟢 Elektif';
+
+  document.getElementById('simBody').innerHTML=`
+    <div class="patient-card">
+      <div class="patient-header">
+        <div class="patient-avatar ${c.type==='ped'?'ped':'adult'}">${c.type==='ped'?'👶':'🧑‍⚕️'}</div>
+        <div>
+          <div class="patient-label">Hasta</div>
+          <div class="patient-name">${c.age} yaş, ${c.sex==='E'?'Erkek':'Kadın'}</div>
+          <span class="urgency-badge ${c.urgency}">${urgLabel}</span>
+        </div>
+      </div>
+      ${vitHtml}
+      <div class="complaint-box">"${c.history||c.chief}"</div>
+      ${c.pmh?`<div style="font-size:11px;color:var(--text3);margin-top:8px;">📋 ${c.pmh}</div>`:''}
+    </div>
+
+    <div class="sim-step" id="stepA">
+      <div class="sim-step-header"><div class="sim-step-icon">⚡</div><div class="sim-step-title">İlk 3 Adımın Ne?</div><span class="sim-step-badge badge-open">Aktif</span></div>
+      <p class="tip">Bu hasta kapından giriyor. İlk yapacağın 3 şeyi yaz:</p>
+      <textarea class="sim-textarea" id="inpA" placeholder="1. …&#10;2. …&#10;3. …"></textarea>
+      <button class="sim-confirm-btn" onclick="doStepA()">Devam →</button>
+      <div id="fbA"></div>
+    </div>
+
+    ${hasImg?`
+    <div class="sim-step locked" id="stepB">
+      <div class="sim-step-header"><div class="sim-step-icon">🔬</div><div class="sim-step-title">Tetkik & Görüntüleme</div><span class="sim-step-badge badge-open" id="badgeB">Kilitli</span></div>
+      <p class="tip">Hangi tetkikleri istersin?</p>
+      <div class="test-grid" id="simTests">
+        ${['Tam Kan','Biyokimya','Koagülasyon','Troponin','CRP/Sed','D-Dimer','Kan Gazı','İdrar','β-hCG','Lipaz/Amilaz','EKG','PA Akciğer','Karın Grafisi','BT Beyin','BT Toraks','BT Abdomen','USG Abdomen','Ekokardiyografi']
+          .map(t=>`<span class="test-chip" onclick="toggleSimTest(this,'${t}')">${t}</span>`).join('')}
+      </div>
+      <button class="sim-confirm-btn" onclick="doStepB()">Sonuçları Gör →</button>
+      <div id="fbB"></div>
+      <div id="imgResults" style="display:none">
+        ${c.ekg?`<div class="imaging-display"><span class="imaging-label">📈 EKG</span>${c.ekg}</div>`:''}
+        ${c.xray?`<div class="imaging-display"><span class="imaging-label">🩻 Grafi</span>${c.xray}</div>`:''}
+        ${c.ct?`<div class="imaging-display"><span class="imaging-label">🧠 BT/MR</span>${c.ct}</div>`:''}
+        ${c.lab?`<div class="imaging-display"><span class="imaging-label">🧪 Lab</span>${c.lab}</div>`:''}
+      </div>
+    </div>`:''}
+
+    <div class="sim-step locked" id="stepC">
+      <div class="sim-step-header"><div class="sim-step-icon">🎯</div><div class="sim-step-title">Ön Tanın Ne?</div><span class="sim-step-badge badge-open" id="badgeC">Kilitli</span></div>
+      <input class="sim-input" id="inpC" placeholder="Tanıyı yaz...">
+      <button class="sim-confirm-btn mt8" onclick="doStepC()">Kontrol Et →</button>
+      <div id="fbC"></div>
+    </div>
+
+    <div class="sim-step locked" id="stepD">
+      <div class="sim-step-header"><div class="sim-step-icon">💊</div><div class="sim-step-title">Tedavi & Order</div><span class="sim-step-badge badge-open" id="badgeD">Kilitli</span></div>
+      <p class="tip">Hastane içi order planını yaz (IV sıvı, konsültasyon, monitörizasyon...)</p>
+      <textarea class="sim-textarea" id="inpD" placeholder="SF 500ml IV&#10;Kardiyoloji konsültasyonu&#10;Monitör bağla, O₂ ver..."></textarea>
+      <button class="sim-confirm-btn mt8" onclick="doStepD()">Devam →</button>
+      <div id="fbD"></div>
+    </div>
+
+    <div class="sim-step locked" id="stepE">
+      <div class="sim-step-header"><div class="sim-step-icon">📋</div><div class="sim-step-title">Reçete Yaz</div><span class="sim-step-badge badge-open" id="badgeE">Kilitli</span></div>
+      <p class="tip">Bu hasta için reçete yazacak olsan hangi ilaçları yazardın?</p>
+      <textarea class="sim-textarea" id="inpE" placeholder="İlaç adı — doz — kullanım şekli&#10;Örn: Aspirin 100mg 1x1 PO&#10;Amoksisilin 1g 2x1 PO 10 gün..."></textarea>
+      <button class="sim-confirm-btn mt8" onclick="doStepE()">Vakayı Tamamla →</button>
+      <div id="fbE"></div>
+    </div>
+  `;
+}
+
+function toggleSimTest(el,name){
+  el.classList.toggle('selected');
+  if(el.classList.contains('selected')) selectedTests.push(name);
+  else selectedTests=selectedTests.filter(t=>t!==name);
+}
+
+function unlock(id,badgeId){
+  const s=document.getElementById(id);
+  if(!s) return;
+  s.classList.remove('locked');
+  if(badgeId){ const b=document.getElementById(badgeId); if(b) b.textContent='Aktif'; }
+  setTimeout(()=>s.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function doStepA(){
+  const v=document.getElementById('inpA').value.trim();
+  if(!v){ alert('Bir şeyler yaz!'); return; }
+  document.getElementById('fbA').innerHTML=`
+    <div class="feedback-box warn">✏️ <strong>Senin cevabın:</strong><br>${v.replace(/\n/g,'<br>')}</div>
+    <div class="feedback-box good" style="margin-top:8px;">✓ <strong>Doğru yaklaşım:</strong><br>${(currentCase.first3||'—').replace(/\n/g,'<br>')}</div>`;
+  document.getElementById('stepA').classList.add('done');
+  const hasImg=currentCase.ekg||currentCase.xray||currentCase.ct||currentCase.lab;
+  hasImg ? unlock('stepB','badgeB') : unlock('stepC','badgeC');
+}
+
+function doStepB(){
+  const correct=currentCase.tests||[];
+  const missing=correct.filter(t=>!selectedTests.includes(t));
+  const extra=selectedTests.filter(t=>!correct.includes(t));
+  document.querySelectorAll('#simTests .test-chip').forEach(chip=>{
+    const n=chip.textContent;
+    if(correct.includes(n)) chip.classList.add('correct');
+    else if(selectedTests.includes(n)) chip.classList.add('wrong');
+  });
+  let msg='';
+  if(missing.length) msg+=`<strong>Eksik:</strong> ${missing.join(', ')}<br>`;
+  if(extra.length) msg+=`<strong>Gereksiz:</strong> ${extra.join(', ')}`;
+  if(!msg) msg='🎯 Mükemmel! Tüm tetkikler doğru.';
+  document.getElementById('fbB').innerHTML=`<div class="feedback-box ${missing.length?'warn':'good'} mt8">${msg}</div>`;
+  document.getElementById('imgResults').style.display='block';
+  document.getElementById('stepB').classList.add('done');
+  unlock('stepC','badgeC');
+}
+
+function doStepC(){
+  const v=document.getElementById('inpC').value.trim();
+  if(!v){ alert('Tanıyı yaz!'); return; }
+  const correct=currentCase.dx||'';
+  const match=correct.toLowerCase().split(' ').some(w=>w.length>3&&v.toLowerCase().includes(w));
+  document.getElementById('fbC').innerHTML=`
+    <div class="feedback-box ${match?'good':'warn'} mt8">
+      ${match?'✓ Doğru yoldayasın!':'Kontrol et —'} <strong>Beklenen:</strong> ${correct}
+    </div>`;
+  document.getElementById('stepC').classList.add('done');
+  unlock('stepD','badgeD');
+}
+
+function doStepD(){
+  const v=document.getElementById('inpD').value.trim();
+  if(!v){ alert('Tedavi planını yaz!'); return; }
+  const correct=currentCase.tx||'';
+  document.getElementById('fbD').innerHTML=`
+    <div class="feedback-box warn mt8">✏️ <strong>Senin planın:</strong><br>${v.replace(/\n/g,'<br>')}</div>
+    ${correct?`<div class="feedback-box good" style="margin-top:8px;">✓ <strong>Doğru order:</strong><br>${correct.replace(/\n/g,'<br>')}</div>`:''}`;
+  document.getElementById('stepD').classList.add('done');
+  unlock('stepE','badgeE');
+}
+
+function doStepE(){
+  const v=document.getElementById('inpE').value.trim();
+  if(!v){ alert('Reçeteyi yaz!'); return; }
+  const correct=currentCase.rx||'';
+  document.getElementById('fbE').innerHTML=`
+    <div class="feedback-box warn mt8">✏️ <strong>Senin reçeten:</strong><br>${v.replace(/\n/g,'<br>')}</div>
+    ${correct?`<div class="feedback-box good" style="margin-top:8px;">✓ <strong>Doğru reçete:</strong><br>${correct.replace(/\n/g,'<br>')}</div>`:''}`;
+  document.getElementById('stepE').classList.add('done');
+  const score=calcScore();
+  scores.push(score);
+  saveScores();
+  setTimeout(()=>showResult(score),500);
+}
+
+function calcScore(){
+  let s=50;
+  // İlk 3 adım
+  const inpA=document.getElementById('inpA');
+  if(inpA&&inpA.value.length>20) s+=15;
+  // Tetkik seçimi
+  if(selectedTests.length>0){
+    const correct=currentCase.tests||[];
+    const hit=selectedTests.filter(t=>correct.includes(t)).length;
+    if(correct.length>0) s+=Math.round((hit/correct.length)*15);
+  }
+  // Tanı
+  const inpC=document.getElementById('inpC');
+  if(inpC){
+    const correct=currentCase.dx||'';
+    const match=correct.toLowerCase().split(' ').some(w=>w.length>3&&inpC.value.toLowerCase().includes(w));
+    if(match) s+=10;
+  }
+  // Tedavi
+  const inpD=document.getElementById('inpD');
+  if(inpD&&inpD.value.length>10) s+=5;
+  // Reçete
+  const inpE=document.getElementById('inpE');
+  if(inpE&&inpE.value.length>10) s+=5;
+  return Math.min(s,100);
+}
+
+function showResult(score){
+  const c=currentCase;
+  document.getElementById('resultWrap').innerHTML=`
+    <div class="result-hero">
+      <div class="result-emoji">${score>=80?'🏆':score>=60?'👍':'💪'}</div>
+      <div class="result-title">${score>=80?'Harika iş!':score>=60?'İyi gidiyorsun!':'Devam et, olacak!'}</div>
+      <div class="result-sub">${c.age}y ${c.sex==='E'?'Erkek':'Kadın'} — ${c.chief}</div>
+      <div class="score-row">
+        <div class="score-box"><div class="score-val blue">${score}%</div><div class="score-name">Bu Vaka</div></div>
+        <div class="score-box"><div class="score-val green">${scores.length}</div><div class="score-name">Toplam</div></div>
+      </div>
+    </div>
+    <div class="answer-reveal"><div class="reveal-label">Tanı</div><div class="reveal-text">${c.dx||'—'}</div></div>
+    <div class="answer-reveal"><div class="reveal-label">İlk 3 Adım</div><div class="reveal-text">${(c.first3||'—').replace(/\n/g,'<br>')}</div></div>
+    <div class="answer-reveal"><div class="reveal-label">Tedavi & Order</div><div class="reveal-text">${(c.tx||'—').replace(/\n/g,'<br>')}</div></div>
+    ${c.rx?`<div class="answer-reveal"><div class="reveal-label">Reçete</div><div class="reveal-text">${c.rx.replace(/\n/g,'<br>')}</div></div>`:''}
+    ${c.alert?`<div class="alert-reveal">⚠️ ${c.alert}</div>`:''}
+    <div style="margin-top:20px;padding-bottom:30px;">
+      ${simIdx+1<simQueue.length
+        ?`<button class="btn-next-case" onclick="simIdx++;loadSimCase();goTo('simScreen')">Sonraki Vaka →</button>`
+        :`<button class="btn-next-case" onclick="goTo('homeScreen')">Tüm Vakalar Bitti 🎉</button>`}
+      <button class="btn-home-out" onclick="goTo('homeScreen')">Ana Ekrana Dön</button>
+    </div>`;
+  goTo('resultScreen');
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+// ── BOOT ─────────────────────────────────────────────────────
+load();
+renderHome();
+</script>
+</body>
+</html>
