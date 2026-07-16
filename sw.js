@@ -1,4 +1,4 @@
-const CACHE = 'acil-v1';
+const CACHE = 'acil-v2';
 const FILES = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
